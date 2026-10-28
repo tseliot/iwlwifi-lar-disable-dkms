@@ -1,0 +1,35 @@
+--- a/source/iwlwifi/mvm/ptp.c
++++ b/source/iwlwifi/mvm/ptp.c
+@@ -7,6 +7,7 @@
+ #include "iwl-debug.h"
+ #include <linux/timekeeping.h>
+ #include <linux/math64.h>
++#include <linux/version.h>
+ 
+ #define IWL_PTP_GP2_WRAP	0x100000000ULL
+ #define IWL_PTP_WRAP_TIME	(3600 * HZ)
+@@ -160,6 +161,12 @@
+ 	/* System (wall) time */
+ 	ktime_t sys_time;
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0)
++	/* This driver captures CLOCK_REALTIME only. */
++	if (xtstamp->clock_id != CLOCK_REALTIME)
++		return -EOPNOTSUPP;
++#endif
++
+ 	memset(xtstamp, 0, sizeof(struct system_device_crosststamp));
+ 
+ 	if (!mvm->ptp_data.ptp_clock) {
+@@ -184,7 +191,11 @@
+ 
+ 	/* System monotonic raw time is not used */
+ 	xtstamp->device = (ktime_t)gp2_ns;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(7, 2, 0)
++	xtstamp->sys_systime = sys_time;
++#else
+ 	xtstamp->sys_realtime = sys_time;
++#endif
+ 
+ out:
+ 	mutex_unlock(&mvm->mutex);

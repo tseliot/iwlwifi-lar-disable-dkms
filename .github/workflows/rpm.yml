@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install RPM build tools
-        run: dnf -y install rpm-build rpmdevtools make
+        run: dnf -y install rpm-build rpmdevtools make gcc kernel-devel elfutils-libelf-devel openssl-devel dwarves diffutils cpio
       - name: Build SRPM and RPM
         run: |
           set -eux
@@ -24,6 +24,15 @@ jobs:
           cp SOURCES/* rpmbuild/SOURCES/
           cp SPECS/* rpmbuild/SPECS/
           rpmbuild --define "_topdir $PWD/rpmbuild" -ba rpmbuild/SPECS/iwlwifi-lar-disable-dkms.spec
+      - name: Compile DKMS modules against the Fedora kernel
+        run: |
+          set -eux
+          kernel=$(rpm -q kernel-devel --qf '%{VERSION}-%{RELEASE}.%{ARCH}\n' | sort -V | tail -n1)
+          mkdir module-check
+          cd module-check
+          rpm2cpio ../rpmbuild/RPMS/noarch/iwlwifi-lar-disable-dkms-*.rpm | cpio -id
+          source_dir=$(find "$PWD/usr/src" -mindepth 1 -maxdepth 1 -type d)
+          make -j2 -C "/usr/src/kernels/$kernel" M="$source_dir/source/iwlwifi" modules
       - name: Upload RPM artifacts
         uses: actions/upload-artifact@v4
         with:

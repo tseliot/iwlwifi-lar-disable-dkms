@@ -46,3 +46,7 @@ sudo reboot
 The source archive is based on Fedora kernel `7.1.5-201.fc44`, and the GitHub
 workflow produces an installable noarch DKMS RPM and SRPM. DKMS rebuilds the
 modules for installed kernels with their matching `kernel-devel` packages.
+Package release `203` adds compatibility with the EML capability field names
+and PTP timestamp API in Linux 7.2 while retaining support for Linux 7.1. The
+workflow also compiles both modules against Fedora 44's current `kernel-devel`
+before uploading RPMs.
